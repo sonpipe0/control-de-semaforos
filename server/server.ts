@@ -5,6 +5,7 @@ app.use(express.json()); // To parse JSON bodies
 // Firebase setup
 import {initializeApp, FirebaseApp} from 'firebase/app';
 import {getDatabase, ref, set, Database} from 'firebase/database';
+import {fireBaseConfigHandle} from './firebaseConfig';
 
 
 

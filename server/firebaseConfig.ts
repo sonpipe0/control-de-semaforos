@@ -10,3 +10,5 @@ const firebaseConfig = {
 };
 
 const fireBaseConfigHandle =  (): typeof firebaseConfig => firebaseConfig;
+
+export {fireBaseConfigHandle};
