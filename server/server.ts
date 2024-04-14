@@ -1,44 +1,31 @@
-import express,{ Express, Request, Response} from 'express';
+import express, { Express, Request, Response } from "express";
+import mongoose, {Connection} from "mongoose";
+import userRouter from "./routes/user";
+
+require("dotenv").config();
 const app = express();
+
+//config
+const mongoDB = process.env.MONGO_DB;
+if (!mongoDB) {
+  console.error("MongoDB connection string is not provided.");
+  process.exit(1);
+}
 app.use(express.json()); // To parse JSON bodies
+mongoose
+  .connect(mongoDB)
+  .then(() => console.log("Connected to MongoDB successfully."))
+  .catch((err) => {
+    console.error("Error while connecting to MongoDB:", err);
+    process.exit(1);
+  });
+const db:Connection = mongoose.connection;
 
-// Firebase setup
-import {initializeApp, FirebaseApp} from 'firebase/app';
-import {getDatabase, ref, set, Database} from 'firebase/database';
-import {fireBaseConfigHandle} from './firebaseConfig';
 
+// Routes
 
+app.use("/user", userRouter);
 
-// Your web app's Firebase configuration
-
-const firebaseConfig = fireBaseConfigHandle();
-
-// Initialize Firebase and get a reference to the service
-const appIni: FirebaseApp = initializeApp(firebaseConfig);
-const db: Database = getDatabase(appIni);
-
-type User = {
-    username: string;
-    name: string;
-    age: number;
-    email: string;
-
-};
-
-// Example route to set data
-app.post('/setUser', (req: Request , res: Response) => {
-    const userData: User = req.body; // Assuming the body contains the user data
-
-    set(ref(db, 'users/' + userData.username), {
-        name: userData.name,
-        age: userData.age,
-        email: userData.email
-    })
-        .then(() => res.status(200).send("User data set successfully."))
-        .catch(error => res.status(400).send(error.message));
-});
-
-// Start listening on port 3000
 app.listen(3000, () => {
-    console.log('Server is running on port 3000');
+  console.log("Server is running on port 3000");
 });
