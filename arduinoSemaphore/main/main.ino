@@ -2,7 +2,7 @@
 const int PIN_R_2 = 15;
 const int PIN_Y_2 = 2;
 const int PIN_G_2 = 12;
-const int PIN_R_1 = 35;
+const int PIN_R_1 = 25;
 const int PIN_Y_1 = 23;
 const int PIN_G_1 = 21;
 
