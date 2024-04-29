@@ -1,12 +1,11 @@
-#include <WiFi.h> // Para ESP32
-WiFiClient WIFI_CLIENT;
+#include <WiFi.h>
+#include <Arduino.h> 
 #include <PubSubClient.h>
+
+WiFiClient WIFI_CLIENT;
 PubSubClient MQTT_CLIENT;
-const int PIN_GREEN = 34;
-const char* ssid = "UA-Alumnos";
-const char* password = "41umn05WLC";
-const int PIN_RED1 = 32;
-const int PIN_BLUE1 = 33;
+const char* ssid = "Fliafc PLC";
+const char* password = "sanlorenzo2018";
 
 void callback(char* recibido, byte* payload, unsigned int length) {
   Serial.print("Mensaje recibido: ");
@@ -23,9 +22,7 @@ void callback(char* recibido, byte* payload, unsigned int length) {
 
 
 
-void setup() {
-  Serial.begin(115200);
-  delay(10);
+void connectToWifiAndMQTT() {
 
   // Conectar con WiFi.
   Serial.println();
@@ -46,7 +43,6 @@ void setup() {
 
   // Configuración de la respuesta.
   MQTT_CLIENT.setCallback(callback);
-  pinMode(PIN_GREEN,OUTPUT);
 }
 
 // Aquí configuramos lo que debe hacer cuando recibe un valor.
@@ -73,22 +69,11 @@ void reconnect() {
   Serial.println("Conectado a MQTT.");
 }
 
-void loop() {
-
-    static int seconds = 0;
-    String message = "hey how are you my friend " + String(seconds);
-    MQTT_CLIENT.publish("XJXT06/aleatorio", message.c_str());
-
-
+void redo() {
   if (!MQTT_CLIENT.connected()) {
     reconnect();
   }
   MQTT_CLIENT.loop();
-  digitalWrite(PIN_GREEN,HIGH);
-  delay(3000);
-  digitalWrite(PIN_GREEN,LOW);
-  
-  seconds += 3; // Chequea lo Subscrito.
 }
 
 
