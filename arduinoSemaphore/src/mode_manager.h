@@ -4,12 +4,6 @@
 #include <Arduino.h>
 
 
-const int g = 2;
-const int r = 15;
-const int b = 0;
-const int r1 =  32;
-const int g1 = 33;
-const int b1 = 25;
 // Function prototypes
 void runNormalMode(int greenTime, int redTime);
 void runObstructedMode();

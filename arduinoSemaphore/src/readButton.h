@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 
-unsigned int semaphore;
 
 void readButtonTask(void *pvParameters);
 

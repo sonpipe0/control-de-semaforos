@@ -16,9 +16,9 @@ enum TrafficLightMode {
   OFF
 };
 
-extern TrafficLightMode mode = NORMAL;
+extern TrafficLightMode mode;
 
-void trafficLightTask(int redTime, int greenTime);
+void trafficLightTask(void * parameter);
 void setTrafficLightMode(TrafficLightMode newMode);
 
 #endif // TRAFFIC_LIGHT_MANAGER_H

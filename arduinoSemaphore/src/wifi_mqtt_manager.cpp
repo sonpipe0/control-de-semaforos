@@ -43,9 +43,12 @@ void reconnect() {
   Serial.println("Conectado a MQTT.");
 }
 
-void keepMqttConnected() {
-  if (!MQTT_CLIENT.connected()) {
-    reconnect();
+void keepMqttConnected(void * parameter) {
+  for(;;) {
+    if (!MQTT_CLIENT.connected()) {
+      reconnect();
+    }
+    MQTT_CLIENT.loop();
+    vTaskDelay(100 / portTICK_PERIOD_MS);
   }
-  MQTT_CLIENT.loop();
 }

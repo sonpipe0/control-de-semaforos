@@ -7,6 +7,6 @@ extern PubSubClient MQTT_CLIENT;
 
 void setupWifiAndMQTT();
 void reconnect();
-void keepMqttConnected();
+void keepMqttConnected(void * parameter);
 
 #endif
