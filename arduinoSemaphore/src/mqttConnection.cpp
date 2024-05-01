@@ -1,22 +1,14 @@
 #include <WiFi.h>
 #include <Arduino.h> 
 #include <PubSubClient.h>
+#include "mqtt_routes.h"
 
 WiFiClient WIFI_CLIENT;
 PubSubClient MQTT_CLIENT;
 const char* ssid = "Fliafc PLC";
 const char* password = "sanlorenzo2018";
 
-void callback(char* recibido, byte* payload, unsigned int length) {
-  Serial.print("Mensaje recibido: ");
-  Serial.print("   ");
-  for (int i = 0; i < length; i++) {
-    char receivedChar = (char)payload[i];
-    Serial.print(receivedChar);
 
-  }
-  Serial.println();
-}
 
 
 
@@ -52,16 +44,25 @@ void reconnect() {
   MQTT_CLIENT.setServer("broker.hivemq.com", 1883);
   MQTT_CLIENT.setClient(WIFI_CLIENT);
 
+  uint32_t chipId = ESP.getEfuseMac();
+
+  // Convert the chip ID to a string
+  char boardId[10];
+  sprintf(boardId, "%08X", chipId);
+
 
   while (!MQTT_CLIENT.connected()) {
     Serial.println("Intentando conectar con MQTT.");
 
-    if (MQTT_CLIENT.connect("XJXT061651656845165416")) { // Use a unique ID for each device
-      MQTT_CLIENT.subscribe("XJXT06/aleatorio");
+    if (MQTT_CLIENT.connect(boardId)) { // Use a unique ID de placa
+      MQTT_CLIENT.subscribe("handler/obstruction/OHDSDHSODHIDHODIHD");
+      MQTT_CLIENT.subscribe("active/hours/NAOSINSDNOAIDSN");
+      MQTT_CLIENT.subscribe("shutdown/NAOSINSDNOAIDSN");
+      MQTT_CLIENT.subscribe("turn/on/NAOSINSDNOAIDSN");
     } else {
       Serial.println("Conexión fallida, rc=" + String(MQTT_CLIENT.state()) + " intentando de nuevo en 3 segundos");
       // Wait before retrying
-      delay(3000);
+      vTaskDelay(3000/portTICK_PERIOD_MS);
       
     }
   }
@@ -69,7 +70,7 @@ void reconnect() {
   Serial.println("Conectado a MQTT.");
 }
 
-void redo() {
+void redo( void * parameters) {
   if (!MQTT_CLIENT.connected()) {
     reconnect();
   }

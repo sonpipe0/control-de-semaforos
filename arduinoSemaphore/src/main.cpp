@@ -1,105 +1,67 @@
-#include <arduinoSemaphore.h>
+#include "mqttConnection.cpp"
+#include "wifi_mqtt_manager.h"
+#include "traffic_light_manager.h"
+#include "mode_manager.h"
+#include "readButton.h"
+#include <Arduino.h>
 
-
-const int GREEN = 2;
-const int RED = 15;
-const int BLUE = 0;
-const int RED2 =  32;
-const int GREEN2 = 33;
-const int BLUE2 = 25;
+// Define constants and global variables here
+const int g2 = 2;
+const int r2 = 15;
+const int b2 = 0;
+const int r1 =  32;
+const int g1 = 33;
+const int b1 = 25;
 const int boton = 35;
 
 int buttonState = 0;
 
+// Define the structure for traffic light parameters
+struct SemaphoreTiming {
+  int greenTime;
+  int yellowTime;
+  int redTime;
+};
 
+// Define the structure for MQTT message handling
+struct TrafficLightParams {
+  int redTime;
+  int greenTime;
+  TrafficLightMode mode;
+};
+
+TrafficLightParams trafficLightParams = {5, 5, NORMAL}; // Default parameters
 
 void setup() {
   Serial.begin(115200);
-  connectToWifiAndMQTT();
-  pinMode(GREEN,OUTPUT);
-  pinMode(RED,OUTPUT);
-  pinMode(BLUE,OUTPUT);
-  pinMode(RED2,OUTPUT);
-  pinMode(BLUE2,OUTPUT);
-  pinMode(GREEN2,OUTPUT);
-  pinMode(boton,INPUT);
+  connectToWifiAndMQTT(); // Connect to WiFi and MQTT
+  pinMode(g2, OUTPUT);
+  pinMode(r2, OUTPUT);
+  pinMode(b2, OUTPUT);
+  pinMode(r1, OUTPUT);
+  pinMode(b1, OUTPUT);
+  pinMode(g1, OUTPUT);
+  pinMode(boton, INPUT);
+
+  // Create the traffic light task with default parameters
+  // read MQTT messages and update trafficLightParams accordingly
+  xTaskCreatePinnedToCore(redo, "ReconnectTask", 1000, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(readButtonTask, "ReadButtonTask", 1000, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(trafficLightTask, "TrafficLightTask", 1000, &trafficLightParams, 1, NULL, 1);
+
+  // Create other tasks here if needed
 }
-
-
-
-
-void doWhileDelay(unsigned long delayDuration, void (*task)()) {
-  unsigned long startMillis = millis();
-
-  while (millis() - startMillis < delayDuration) {
-    task(); // Execute the task
-    delay(1); // Add a small delay to prevent the task from being executed too frequently
-  }
-
-  task(); // Execute the task one final time after the delay
-}
-
-
-void green(int r, int g , int b){
-  analogWrite(r,0);
-  analogWrite(g,255);
-  analogWrite(b,0);
-}
-
-void red(int r, int g , int b){
-  analogWrite(r,255);
-  analogWrite(g,0);
-  analogWrite(b,0);
-}
-
-void yellow(int r, int g, int b){
-  analogWrite(r,0);
-  analogWrite(g,0);
-  analogWrite(b,255);
-}
-
-
-void semaphore(int r, int g, int b, int r1, int g1, int b1) {
-  //Light 1 yellow for 2 secs
-  yellow(r, g, b);
-  doWhileDelay(2000, redo);
-
-  // Light 1 red, Light 2 yellow
-  red(r, g, b);
-
-  doWhileDelay(1000, redo);
-  yellow(r1, g1, b1);
-  doWhileDelay(2000, redo);
-
-  //light2 green for 9 seconds
-  green(r1, g1, b1);
-
-  // Light 1 stays red for 9 more seconds
-  doWhileDelay(9000, redo);
-
-  // Light 2 yellow for 2 seconds
-  yellow(r1, g1, b1);
-  doWhileDelay(2000, redo);
-  
-
-  // Light 2 red
-  red(r1, g1, b1);
-  doWhileDelay(1000, redo);
-
-  // Light 1 yellow and then green after 1 second
-  doWhileDelay(1000, redo);
-  yellow(r, g, b);
-  doWhileDelay(2000, redo);
-  green(r, g, b);
-
-  // Light 1 stays green while Light 2 is red
-  doWhileDelay(7000, redo);
-
-  
-}
-
-
 
 void loop() {
-  semaphore(RED,GREEN,BLUE,RED2,GREEN2,BLUE2);
+  // Main loop functionality here
+  // Check for button presses or other inputs and update trafficLightParams accordingly
+};
+
+void trafficLightTask(void * parameter) {
+  TrafficLightParams* params = (TrafficLightParams*) parameter;
+  // Use params->redTime and params->greenTime in your task
+  // ...
 }
+
+
+// Define the xTaskTrafficLightTask function here
