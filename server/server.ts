@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from "express";
-import semaphoreRouter from "./controllers/semaphoreRouter";
+import semaphoreRouter from "./controllers/semaphoreController";
 import mqtt from "mqtt";
-import auth from "./controllers/auth";
+import auth from "./controllers/authController";
 import { connectToDatabase } from "./config/database";
 import { filterBySessionId } from "./middleware/sessionFilter";
 import client from "./mqtt";
@@ -21,5 +21,5 @@ app.use("/auth", auth);
 app.use("/semaphore", semaphoreRouter);
 
 app.listen(3000, () => {
-	console.log("Server is running on port 3000");
+  console.log("Server is running on port 3000");
 });
