@@ -30,7 +30,6 @@ void readButtonTask(void *pvParameters) {
   int lastButtonState = HIGH;
   for(;;) {
     int currentButtonState = digitalRead(boton);
-    Serial.println(currentButtonState);
     if(currentButtonState == HIGH && lastButtonState == LOW) {
         Serial.println("Boton presionado");
         semaphore = 0;
