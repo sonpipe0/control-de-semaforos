@@ -39,25 +39,15 @@ export async function createUser(
       body: { message: "Email already exists" },
     };
   }
-  if (user.isAdminToken == process.env.IS_ADMIN_PASSWORD) {
-    newUser = new UserSchema({
-      username: user.username,
-      name: user.name,
-      password: user.password,
-      age: user.age,
-      email: user.email,
-      isAdmin: true,
-    });
-  } else {
-    newUser = new UserSchema({
-      username: user.username,
-      name: user.name,
-      password: user.password,
-      age: user.age,
-      email: user.email,
-      isAdmin: false,
-    });
-  }
+  console.log(user.isAdminToken)
+  newUser = new UserSchema({
+    username: user.username,
+    name: user.name,
+    password: user.password,
+    age: user.age,
+    email: user.email,
+    isAdmin: user.isAdminToken === process.env.IS_ADMIN_PASSWORD,
+  });
 
   try {
     await newUser.save();
@@ -92,21 +82,66 @@ export async function loginUser(
     { _id: 1 },
   );
   if (sessionFound) {
-    //delete previous session
     await sessionFound.deleteOne();
   }
   const session = new SessionModel({
     user_id: userFound.id,
     expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
   });
-  try {
-    await session.save();
-    const sessionSaved = await SessionModel.findOne(
-      { user_id: userFound.id },
-      { _id: 1 },
-    );
-    return { status: StatusCodes.OK, body: sessionSaved };
-  } catch (err: any) {
-    return { status: 400, body: { message: err.message } };
+
+  await session.save();
+  const sessionSaved = await SessionModel.findOne(
+    { user_id: userFound.id },
+    { _id: 1 },
+  );
+
+  if (sessionSaved != null) {
+    const session_id = sessionSaved._id;
+    return { status: StatusCodes.OK, body: { session_id } };
+  } else {
+    return {
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      body: { message: "Internal server error" },
+    };
   }
 }
+
+export const refresh = async (req: Request) => {
+  const SessionModel = mongoose.model("Session", SessionSchema);
+  const session_id: string = req.body.session_id;
+  const session = await SessionModel.findOne({ _id: session_id });
+  if (!session) {
+    return {
+      status: StatusCodes.UNAUTHORIZED,
+      body: { message: "Session not found" },
+    };
+  }
+  if (session.expires < new Date()) {
+    await session.deleteOne();
+    return {
+      status: StatusCodes.UNAUTHORIZED,
+      body: { message: "Session expired, you should Login again" },
+    };
+  } else {
+    const user = await UserSchema.findOne({ _id: session.user_id });
+    if (!user) {
+      return {
+        status: StatusCodes.NOT_FOUND,
+        body: { message: "User not found" },
+      };
+    }
+    await session.updateOne({
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+    });
+
+    const body = {
+      user_id: user._id,
+      username: user.username,
+      name: user.name,
+      age: user.age,
+      email: user.email,
+      isAdmin: user.isAdmin,
+    };
+    return { status: StatusCodes.OK, body };
+  }
+};

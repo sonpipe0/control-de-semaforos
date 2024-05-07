@@ -1,5 +1,5 @@
 import express, { Router, Request, Response } from "express";
-import { createUser, loginUser } from "../services/authService";
+import { createUser, loginUser, refresh } from "../services/authService";
 
 const router = Router();
 
@@ -11,6 +11,11 @@ router.post("/create", async (req: Request, res: Response) => {
 
 router.post("/login", async (req: Request, res: Response) => {
   const result = await loginUser(req);
+  res.status(result.status).json(result.body);
+});
+
+router.post("/refresh", async (req: Request, res: Response) => {
+  const result = await refresh(req);
   res.status(result.status).json(result.body);
 });
 
