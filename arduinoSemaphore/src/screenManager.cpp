@@ -15,8 +15,10 @@ String modeToString(TrafficLightMode mode) {
       return "Pedestrian";
     case OFF:
       return "Off";
+    default:
+      return "Unknown";
   }
-}
+};
 
 void screenManagerTask(void *pvParameters) {
   for (;;) {
