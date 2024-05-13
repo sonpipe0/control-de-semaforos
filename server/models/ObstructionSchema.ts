@@ -8,9 +8,8 @@ export interface Obstruction {
 }
 
 export const ObstructionSchema = new mongoose.Schema({
-  id: {
+  name: {
     type: String,
-    unique: true,
     required: true,
   },
   time: {

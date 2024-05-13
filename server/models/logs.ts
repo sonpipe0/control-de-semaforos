@@ -7,7 +7,7 @@ const log = new mongoose.Schema({
     required: true,
   },
   log: {
-    type: Schema.Types.Mixed,
+    type: Schema.Types.Mixed, //pedestrian an obstruction
     required: false,
   },
 });

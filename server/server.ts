@@ -19,8 +19,8 @@ const topic: mqtt.MqttClient = client.subscribe("semaphore/create");
 app.use(cors());
 app.all("*", filterBySessionId);
 
-app.use("/api/v1/auth", auth);
-app.use("/api/v1/semaphore", semaphoreRouter);
+app.use("/auth", auth);
+app.use("/semaphore", semaphoreRouter);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
