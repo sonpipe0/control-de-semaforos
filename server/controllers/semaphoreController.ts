@@ -3,9 +3,9 @@ import SemaphoreSchema from "../models/semaphore";
 import { StatusType } from "../types/statusTypes";
 import { DayObject } from "../models/DayObjectSchema";
 import {
-  createSemaphore,
+  createSemaphore, getSemaphoreInformation,
   updateSemaphoreActiveTime,
-  updateSemaphoreStatus,
+  updateSemaphoreStatus, UpdateSemaphoreTiming,
 } from "../services/semaphoreService";
 
 const router = Router();
@@ -37,6 +37,16 @@ router.post("/update-active-time", async (req: Request, res: Response) => {
   const { status, body }: { status: number; body: any } =
     await updateSemaphoreActiveTime(req);
   res.status(status).json(body);
+});
+
+router.get("/get-semaphore", async (req: Request, res: Response) => {
+  const {status, body}: {status: number; body: any} = await getSemaphoreInformation(req);
+    res.status(status).json(body);
+});
+
+router.post("/update-timing", async (req: Request, res: Response) => {
+  const {status, body} : {status: number; body: any} = await UpdateSemaphoreTiming(req);
+    res.status(status).json(body);
 });
 
 export default router;
