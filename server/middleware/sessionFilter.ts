@@ -11,7 +11,7 @@ export async function filterBySessionId(
     next();
     return;
   } else {
-    let sessionId = req.headers["Authorization"];
+    let sessionId = req.headers["authorization"];
     if (!sessionId) {
       res.status(401).json({ message: "Unauthorized" });
       return;
@@ -22,7 +22,7 @@ export async function filterBySessionId(
     let user;
     const Session = mongoose.model("Session", SessionSchema);
     try {
-      let user = await Session.findOne({
+      user = await Session.findOne({
         _id: sessionId,
         expires: { $gte: new Date() },
       });

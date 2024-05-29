@@ -39,9 +39,11 @@ router.post("/update-active-time", async (req: Request, res: Response) => {
   res.status(status).json(body);
 });
 
-router.get("/get-semaphore", async (req: Request, res: Response) => {
+router.get("/get-semaphores", async (req: Request, res: Response) => {
   const {status, body}: {status: number; body: any} = await getSemaphoreInformation(req);
-    res.status(status).json(body);
+  console.log(body);
+  console.log(status);
+  res.status(status).json(body);
 });
 
 router.post("/update-timing", async (req: Request, res: Response) => {

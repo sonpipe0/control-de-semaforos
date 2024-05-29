@@ -1,6 +1,8 @@
 import {DayObject} from "../models/DayObjectSchema";
 import SemaphoreSchema from "../models/semaphore";
 import {Request} from "express";
+import mongoose from "mongoose";
+import {StatusType} from "../types/statusTypes";
 
 function validateHour(time: string) {
     const hourRegex: RegExp = /^(0[0-9]|1[0-9]|2[0-3])$/;
@@ -129,13 +131,32 @@ export async function UpdateSemaphoreTiming(
 }
 
 export async function getSemaphoreInformation(req: Request): Promise<{ status: number; body: any }> {
-const {id}: { id: string } = req.body;
-    if (!id) {
-        return {status: 400, body: {message: "No id provided"}};
-    }
-    const semaphore = await SemaphoreSchema.findOne({id});
-    if (!semaphore) {
-        return {status: 404, body: {message: "Semaphore not found"}};
-    }
-    return {status: 200, body: semaphore};
+    const semaphores = await SemaphoreSchema.find({},{_id:1, name:1, status:1, green_time:1, red_time:1, operating_time:1});
+    const result: Semaphore[] = [];
+    semaphores.forEach((semaphore) => {
+        const active_time: DayObject[] = [];
+        semaphore.operating_time.forEach((day) => {
+            const dayObject: DayObject = { day: day.day as string, open: day.open as string, close: day.close as string};
+            active_time.push(dayObject);
+        });
+        result.push({
+            id: semaphore._id.toString(),
+            name: semaphore.name,
+            status: semaphore.status,
+            green_time: semaphore.green_time,
+            red_time: semaphore.red_time,
+            operating_time: active_time
+        });
+    });
+    return {status: 200, body: result};
+}
+
+
+interface Semaphore{
+    id: string,
+    name: string,
+    status: StatusType,
+    green_time: number,
+    red_time: number,
+    operating_time: DayObject[]
 }
