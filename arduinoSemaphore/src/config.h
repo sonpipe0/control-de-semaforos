@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #include <LiquidCrystal_I2C.h>
-
+#include <ESP32Time.h>
 
 
 extern const char* ssid;
@@ -10,6 +10,7 @@ extern const char* password;
 extern const char* mqtt_server;
 extern const int mqtt_port;
 extern unsigned int semaphore;
+extern ESP32Time rtc;
 
 const int g = 2;
 const int r = 15;

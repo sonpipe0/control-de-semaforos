@@ -3,9 +3,11 @@
 #include <ArduinoJson.h>
 #include "wifi_mqtt_manager.h"
 #include "config.h"
-#include <time.h>
 
-const int boton1 = 34;
+const int boton1 = 23;
+const int boton2 = 34;
+
+
 
 DynamicJsonDocument generatePedestrianRequestJSON() {
     DynamicJsonDocument doc(1024);
@@ -13,11 +15,24 @@ DynamicJsonDocument generatePedestrianRequestJSON() {
     doc["esp32_id"] = ESP.getEfuseMac();
 
     // Get the current time
-    time_t now = time(nullptr);
-
-    // Format the time as a string
+    
+    int year = rtc.getYear();
+    int month = rtc.getMonth();
+    int day = rtc.getDay();
+    int hour = rtc.getHour();
+    int minute = rtc.getMinute();
+    int second = rtc.getSecond();
+    struct tm timeinfo = {0};
+    timeinfo.tm_year = year - 1900;
+    timeinfo.tm_mon = month - 1;
+    timeinfo.tm_mday = day;
+    timeinfo.tm_hour = hour;
+    timeinfo.tm_min = minute;
+    timeinfo.tm_sec = second;
     char timeStr[20];
-    strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", localtime(&now));
+    strftime(timeStr, 20, "%Y-%m-%d %H:%M:%S", &timeinfo);
+    Serial.println(timeStr);
+
 
     // Set the time field in the JSON document
     doc["time"] = timeStr;
@@ -28,8 +43,10 @@ DynamicJsonDocument generatePedestrianRequestJSON() {
 void readButtonTask(void *pvParameters) {
   Serial.println("Read Button Task running...");
   int lastButtonState = HIGH;
+  int lastButtonState2 = HIGH;
   for(;;) {
-    int currentButtonState = digitalRead(boton);
+    int currentButtonState = digitalRead(boton1);
+    // Serial.println(currentButtonState);
     if(currentButtonState == HIGH && lastButtonState == LOW) {
         Serial.println("Boton presionado");
         semaphore = 0;
@@ -39,10 +56,26 @@ void readButtonTask(void *pvParameters) {
         MQTT_CLIENT.beginPublish("pedestrian/request", messageStr.length(), true);
         MQTT_CLIENT.print(messageStr);
         MQTT_CLIENT.endPublish();
+        Serial.println(messageStr);
+        setTrafficLightMode(PEDESTRIAN_REQUEST);
+        vTaskDelay(200 / portTICK_PERIOD_MS); // Debounce delay
+    }
+    int currentButtonState2 = digitalRead(boton2);
+    if(currentButtonState2 == HIGH && lastButtonState2 == LOW) {
+        Serial.println("Boton presionado");
+        semaphore = 1;
+        DynamicJsonDocument message = generatePedestrianRequestJSON();
+        String messageStr;
+        serializeJson(message, messageStr);
+        MQTT_CLIENT.beginPublish("pedestrian/request", messageStr.length(), true);
+        MQTT_CLIENT.print(messageStr);
+        MQTT_CLIENT.endPublish();
+        Serial.println(messageStr);
         setTrafficLightMode(PEDESTRIAN_REQUEST);
         vTaskDelay(200 / portTICK_PERIOD_MS); // Debounce delay
     }
     lastButtonState = currentButtonState;
+    lastButtonState2 = currentButtonState2;
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }

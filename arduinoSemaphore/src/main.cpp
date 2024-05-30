@@ -7,16 +7,22 @@
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
 #include "screenManager.h"
+#include <NTPClient.h>
+#include <ESP32Time.h>
+#include <ultrasonido.h>
 
 // Define constants and global variables here
-const char* ssid = "Pipe";
-const char* password = "raulito64";
+const char* ssid = "Fliafc PLC";
+const char* password = "sanlorenzo2018";
 const char* mqtt_server = "broker.hivemq.com";
 const int mqtt_port = 1883;
 unsigned int semaphore = 0;
 TrafficLightMode mode = NORMAL; 
 LiquidCrystal_I2C lcd(0x27,16,2); // set the LCD address to 0x3F for a 16 chars and 2 line display
 
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "ar.pool.ntp.org", -3 * 3600, 60000);
+ESP32Time rtc(0);
 
 // Define the structure for traffic light parameters
 struct SemaphoreTiming {
@@ -32,7 +38,7 @@ struct TrafficLightParams {
   TrafficLightMode mode;
 };
 
-TrafficLightParams trafficLightParams = {5, 5, NORMAL}; // Default parameters
+TrafficLightParams trafficLightParams = {30, 60, NORMAL}; // Default parameters
 
 void setup() {
   Serial.begin(115200);
@@ -40,8 +46,22 @@ void setup() {
   lcd.clear();         
   lcd.backlight(); 
   
+ 
+  
   
   setupWifiAndMQTT(); // Connect to WiFi and MQTT
+
+  timeClient.begin();
+  while(!timeClient.update()) {
+    timeClient.forceUpdate();
+  }
+
+   rtc.setTime(timeClient.getEpochTime());
+
+   //print the date and time saved in the RTC
+    Serial.println(rtc.getDateTime(true));
+    
+  
   pinMode(g, OUTPUT);
   pinMode(r, OUTPUT);
   pinMode(b, OUTPUT);
@@ -56,6 +76,7 @@ void setup() {
   xTaskCreatePinnedToCore(readButtonTask, "ReadButtonTask", 3000, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(trafficLightTask, "TrafficLightTask", 3000, (void*)&trafficLightParams, 1, NULL, 1);
   xTaskCreatePinnedToCore(screenManagerTask, "ScreenTask", 3000, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(ultraSoundTask, "UltraSoundTask", 3000, NULL, 1, NULL, 1);
   // Create other tasks here if needed
 }
 
