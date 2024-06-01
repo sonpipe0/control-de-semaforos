@@ -87,7 +87,8 @@ export async function updateSemaphoreActiveTime(
         id,
         dayList
     }: { id: string; dayList: Array<DayObject> } = req.body;
-    const semaphore = await SemaphoreSchema.findOne({id});
+
+    const semaphore = await SemaphoreSchema.findById(id);
     if (!semaphore) {
         return {status: 404, body: {message: "Semaphore not found"}};
     }
@@ -96,9 +97,8 @@ export async function updateSemaphoreActiveTime(
             return {status: 400, body: {message: "Invalid operating time"}};
         }
     });
-
     try {
-        await SemaphoreSchema.updateOne({id}, {operating_time: dayList});
+        await SemaphoreSchema.findByIdAndUpdate(id, {operating_time: dayList});
         return {
             status: 200,
             body: {message: "Semaphore operating time updated successfully"},
@@ -117,13 +117,12 @@ export async function UpdateSemaphoreTiming(
         green_time,
         red_time
     }: { id: string; green_time: number; red_time: number } = req.body;
-    const semaphore = await SemaphoreSchema.findOne({id});
+    const semaphore = await SemaphoreSchema.findById(id);
     if (!semaphore) {
         return {status: 404, body: {message: "Semaphore not found"}};
     }
     try {
-
-        await SemaphoreSchema.updateOne({id}, {green_time: green_time, red_time: red_time});
+        await SemaphoreSchema.findByIdAndUpdate(id, {green_time: green_time, red_time: red_time});
     } catch (err: any) {
         return {status: 400, body: {message: err.message}};
     }
