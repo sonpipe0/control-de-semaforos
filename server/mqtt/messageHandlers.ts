@@ -25,38 +25,38 @@ async function createSemaphore(message: Buffer) {
     operating_time: [
       {
         day: "Monday",
-        start_time: "00",
-        end_time: "23",
+        open: "00:00:00",
+        close: "23:59:59",
       },
       {
         day: "Tuesday",
-        start_time: "00",
-        end_time: "23",
+        open: "00:00:00",
+        close: "23:59:59",
       },
       {
         day: "Wednesday",
-        start_time: "00",
-        end_time: "23",
+        open: "00:00:00",
+        close: "23:59:59",
       },
       {
         day: "Thursday",
-        start_time: "00",
-        end_time: "23",
+        open: "00:00:00",
+        close: "23:59:59",
       },
       {
         day: "Friday",
-        start_time: "00",
-        end_time: "23",
+        open: "00:00:00",
+        close: "23:59:59",
       },
       {
         day: "Saturday",
-        start_time: "00",
-        end_time: "23",
+        open: "00:00:00",
+        close: "23:59:59",
       },
       {
         day: "Sunday",
-        start_time: "00",
-        end_time: "23",
+        open: "00:00:00",
+        close: "23:59:59",
       },
     ],
   };
@@ -64,6 +64,7 @@ async function createSemaphore(message: Buffer) {
     let semaphoreObject = new SemaphoreSchema(semaphore);
     await semaphoreObject.save();
   } catch (error) {
-    console.error("Error while creating semaphore", error);
-  }
+    //semaphore already exists
+    console.log("Semaphore already exists");
+    }
 }
