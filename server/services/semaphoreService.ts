@@ -70,7 +70,7 @@ export async function updateSemaphoreStatus(
         return {status: 404, body: {message: "Semaphore not found"}};
     }
     try {
-        await SemaphoreSchema.updateOne({_id: id}, {status: status});
+        await SemaphoreSchema.updateOne({name: id}, {status: status});
         client.publish("semaphore/" + id + "/status", status);
         return {
             status: 200,
