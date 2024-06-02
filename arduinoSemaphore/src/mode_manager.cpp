@@ -1,94 +1,116 @@
 #include "mode_manager.h"
 #include <Arduino.h>
 #include "config.h"
-#include "traffic_light_manager.h"
 
 extern TrafficLightMode mode;
+extern SemaphoreHandle_t modeChangeSemaphore;
+extern TaskHandle_t normalTaskHandle;
 
-void runNormalMode(int greenTime, int redTime) {
-    yellow(r1,g1,b1);
-    if(mode != NORMAL) return;
-    vTaskDelay(pdMS_TO_TICKS(2000));
-    if(mode != NORMAL) return;
-    green(r1,g1,b1);
-    if(mode != NORMAL) return;
-    vTaskDelay(pdMS_TO_TICKS(greenTime*1000));
-    if(mode != NORMAL) return;
-    yellow(r1,g1,b1);
-    if(mode != NORMAL) return;
-    vTaskDelay(pdMS_TO_TICKS(2000));
-    if(mode != NORMAL) return;
-    red(r1,g1,b1);
-    if(mode != NORMAL) return;
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    if(mode != NORMAL) return;
-    yellow(r,g,b);
-    vTaskDelay(pdMS_TO_TICKS(2000));
-    if(mode != NORMAL) return;
-    green(r,g,b);
-    if(mode != NORMAL) return;
-    vTaskDelay(pdMS_TO_TICKS(redTime*1000-3000));
-    if(mode != NORMAL) return;
-    yellow(r,g,b);
-    if(mode != NORMAL) return;
-    vTaskDelay(2000/ portTICK_PERIOD_MS);
-    if(mode != NORMAL) return;
-    red(r,g,b);
-    if(mode != NORMAL) return;
-    vTaskDelay(pdMS_TO_TICKS(1000));
-}
-
-void runObstructedMode() {
-        if(mode != OBSTRUCTED) return;
-        yellow(r1,g1,b1);
-        if(mode != OBSTRUCTED) return;
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        if(mode != OBSTRUCTED) return;
-        off(r1,g1,b1);
-        yellow(r,g,b);
-        if(mode != OBSTRUCTED) return;
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        if(mode != OBSTRUCTED) return;
-        off(r,g,b);
-}
-
-void runPedestrianRequestMode(int greenTime, int redTime, int semaphore) {
-  Serial.println("Pedestrian Request Mode");
-  if (semaphore == 1) {
-    red(r1,g1,b1);
-    vTaskDelay( pdMS_TO_TICKS(5000));
-  } else {
-    red(r,g,b);
-    vTaskDelay(pdMS_TO_TICKS(5000));
+void runNormalModeTask(void *pvParameters) {
+  while (1) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    TrafficLightParams *params = (TrafficLightParams *) pvParameters;
+    int redTime = params->redTime;
+    int greenTime = params->greenTime;
+    Serial.println("Normal mode");
+    Serial.println(redTime);
+    Serial.println(greenTime);
+    
+    while (mode == NORMAL) {
+      yellow(r1, g1, b1);
+      vTaskDelay(pdMS_TO_TICKS(2000));
+      green(r1, g1, b1);
+      vTaskDelay(pdMS_TO_TICKS(greenTime * 1000));
+      yellow(r1, g1, b1);
+      vTaskDelay(pdMS_TO_TICKS(2000));
+      red(r1, g1, b1);
+      vTaskDelay(pdMS_TO_TICKS(1000));
+      
+      yellow(r, g, b);
+      vTaskDelay(pdMS_TO_TICKS(2000));
+      green(r, g, b);
+      vTaskDelay(pdMS_TO_TICKS(greenTime * 1000 - 3000));
+      yellow(r, g, b);
+      vTaskDelay(pdMS_TO_TICKS(2000));
+      red(r, g, b);
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    }
   }
 }
 
-void runOffMode() {
-    off(r1, g1, b1);
-    off(r, g, b);
+void runObstructedModeTask(void *pvParameters) {
+  while (1) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    while (mode == OBSTRUCTED) {
+      yellow(r1, g1, b1);
+      vTaskDelay(pdMS_TO_TICKS(2000));
+      off(r1, g1, b1);
+      yellow(r, g, b);
+      vTaskDelay(pdMS_TO_TICKS(2000));
+      off(r, g, b);
+    }
+  }
 }
 
+void runPedestrianRequestModeTask(void *pvParameters) {
+  while (1) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    TrafficLightParams *params = (TrafficLightParams *) pvParameters;
+    int redTime = params->redTime;
+    int greenTime = params->greenTime;
+    
+    if (mode == PEDESTRIAN_REQUEST) {
+      if (semaphore == 1) {
+        yellow(r1, g1, b1);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        red(r1, g1, b1);
+        vTaskDelay(pdMS_TO_TICKS(redTime * 1000));
+      } else {
+        yellow(r, g, b);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        red(r, g, b);
+        vTaskDelay(pdMS_TO_TICKS(redTime * 1000));
+      }
+    }
+      xSemaphoreTake(modeChangeSemaphore, portMAX_DELAY);
+      mode = NORMAL;
+      xTaskNotifyGive(normalTaskHandle);
+      xSemaphoreGive(modeChangeSemaphore);
 
-void green(int r, int g , int b){
-  analogWrite(r,0);
-  analogWrite(g,255);
-  analogWrite(b,0);
+  }
 }
 
-void red(int r, int g , int b){
-  analogWrite(r,255);
-  analogWrite(g,0);
-  analogWrite(b,0);
+void runOffModeTask(void *pvParameters) {
+  while (1) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    while (mode == OFF) {
+      off(r1, g1, b1);
+      off(r, g, b);
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+  }
 }
 
-void yellow(int r, int g, int b){
-  analogWrite(r,0);
-  analogWrite(g,0);
-  analogWrite(b,255);
+void green(int r, int g, int b) {
+  analogWrite(r, 0);
+  analogWrite(g, 255);
+  analogWrite(b, 0);
 }
 
-void off(int r, int g, int b){
-  analogWrite(r,0);
-  analogWrite(g,0);
-  analogWrite(b,0);
+void red(int r, int g, int b) {
+  analogWrite(r, 255);
+  analogWrite(g, 0);
+  analogWrite(b, 0);
+}
+
+void yellow(int r, int g, int b) {
+  analogWrite(r, 0);
+  analogWrite(g, 0);
+  analogWrite(b, 255);
+}
+
+void off(int r, int g, int b) {
+  analogWrite(r, 0);
+  analogWrite(g, 0);
+  analogWrite(b, 0);
 }

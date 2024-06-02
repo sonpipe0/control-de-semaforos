@@ -5,10 +5,10 @@
 
 
 // Function prototypes
-void runNormalMode(int greenTime, int redTime);
-void runObstructedMode();
-void runPedestrianRequestMode(int greenTime, int redTime, int semaphore);
-void runOffMode();
+void runNormalModeTask(void *pvParameters);
+void runObstructedModeTask(void *pvParameters);
+void runPedestrianRequestModeTask(void *pvParameters);
+void runOffModeTask(void *pvParameters);
 
 // LED control functions
 void green(int r, int g, int b);

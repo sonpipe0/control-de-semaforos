@@ -1,11 +1,8 @@
 #include "readButton.h"
-#include "traffic_light_manager.h"
 #include <ArduinoJson.h>
 #include "wifi_mqtt_manager.h"
 #include "config.h"
 
-const int boton1 = 23;
-const int boton2 = 34;
 
 
 
@@ -48,35 +45,30 @@ void readButtonTask(void *pvParameters) {
     int currentButtonState = digitalRead(boton1);
     // Serial.println(currentButtonState);
     if(currentButtonState == HIGH && lastButtonState == LOW) {
-        Serial.println("Boton presionado");
         semaphore = 0;
-        DynamicJsonDocument message = generatePedestrianRequestJSON();
-        String messageStr;
-        serializeJson(message, messageStr);
-        MQTT_CLIENT.beginPublish("pedestrian/request", messageStr.length(), true);
-        MQTT_CLIENT.print(messageStr);
-        MQTT_CLIENT.endPublish();
-        Serial.println(messageStr);
-        setTrafficLightMode(PEDESTRIAN_REQUEST);
+        sendMqtt();
         vTaskDelay(200 / portTICK_PERIOD_MS); // Debounce delay
     }
     int currentButtonState2 = digitalRead(boton2);
     if(currentButtonState2 == HIGH && lastButtonState2 == LOW) {
-        Serial.println("Boton presionado");
         semaphore = 1;
-        DynamicJsonDocument message = generatePedestrianRequestJSON();
-        String messageStr;
-        serializeJson(message, messageStr);
-        MQTT_CLIENT.beginPublish("pedestrian/request", messageStr.length(), true);
-        MQTT_CLIENT.print(messageStr);
-        MQTT_CLIENT.endPublish();
-        Serial.println(messageStr);
-        setTrafficLightMode(PEDESTRIAN_REQUEST);
+        sendMqtt();
         vTaskDelay(200 / portTICK_PERIOD_MS); // Debounce delay
     }
     lastButtonState = currentButtonState;
     lastButtonState2 = currentButtonState2;
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(100));
   }
+
 }
 
+void sendMqtt()
+{
+  DynamicJsonDocument message = generatePedestrianRequestJSON();
+  String messageStr;
+  serializeJson(message, messageStr);
+  MQTT_CLIENT.beginPublish("pedestrian/request", messageStr.length(), true);
+  MQTT_CLIENT.print(messageStr);
+  MQTT_CLIENT.endPublish();
+  Serial.println(messageStr);
+}
