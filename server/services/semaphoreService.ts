@@ -3,6 +3,7 @@ import SemaphoreSchema from "../models/semaphore";
 import {Request} from "express";
 import mongoose from "mongoose";
 import {StatusType} from "../types/statusTypes";
+import client from "../mqtt";
 
 function validateHour(time: string) {
     const hourRegex: RegExp = /^(0[0-9]|1[0-9]|2[0-3])$/;
@@ -64,12 +65,13 @@ export async function updateSemaphoreStatus(
     req: Request,
 ): Promise<{ status: number; body: any }> {
     const {id, status}: { id: string; status: string } = req.body;
-    const semaphore = await SemaphoreSchema.findOne({id});
+    const semaphore = await SemaphoreSchema.findOne({name: id});
     if (!semaphore) {
         return {status: 404, body: {message: "Semaphore not found"}};
     }
     try {
-        await SemaphoreSchema.updateOne({id}, {status: status});
+        await SemaphoreSchema.updateOne({_id: id}, {status: status});
+        client.publish("semaphore/" + id + "/status", status);
         return {
             status: 200,
             body: {message: "Semaphore status updated successfully"},
