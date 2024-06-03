@@ -10,6 +10,7 @@ extern const char* password;
 extern const char* mqtt_server;
 extern const int mqtt_port;
 extern unsigned int semaphore;
+extern bool isInterrupted;
 const int boton1 = 23;
 const int boton2 = 34;
 
@@ -25,6 +26,14 @@ struct TrafficLightParams {
   int redTime;
   int greenTime;
 };
+
+struct activeHours {
+  String day;
+  String startHour;
+  String endHour;
+};
+
+extern activeHours activeHoursArray[7];
 
 extern TrafficLightParams trafficLightParams;
 

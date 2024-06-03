@@ -1,3 +1,4 @@
+#define MQTT_MAX_PACKET_SIZE 1024
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include "config.h"
@@ -23,6 +24,7 @@ void setupWifiAndMQTT() {
 
   MQTT_CLIENT.setServer(mqtt_server, mqtt_port);
   MQTT_CLIENT.setCallback(callback);
+  MQTT_CLIENT.setBufferSize(MQTT_MAX_PACKET_SIZE);
   reconnect();
 }
 
