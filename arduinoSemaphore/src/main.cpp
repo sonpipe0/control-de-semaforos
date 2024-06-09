@@ -12,7 +12,7 @@
 #include <ArduinoJson.h>
 
 // Define constants and global variables here
-const char *ssid = "fernandezc";
+const char *ssid = "Fliafc PLC";
 const char *password = "sanlorenzo2018";
 const char *mqtt_server = "18.214.77.237";
 const int mqtt_port = 1883;
@@ -30,6 +30,7 @@ TaskHandle_t obstructedTaskHandle = NULL;
 TaskHandle_t pedestrianRequestTaskHandle = NULL;
 TaskHandle_t offTaskHandle = NULL;
 bool isInterrupted = false;
+bool configReceived = false;
 
 // Define the structure for traffic light parameters
 struct SemaphoreTiming
@@ -77,6 +78,19 @@ void IRAM_ATTR handleButtonPress()
   xSemaphoreGiveFromISR(modeChangeSemaphore, &xHigherPriorityTaskWoken);
 }
 
+void restartTrafficLightTasks()
+{
+  vTaskDelete(normalTaskHandle);
+  vTaskDelete(obstructedTaskHandle);
+  vTaskDelete(pedestrianRequestTaskHandle);
+  vTaskDelete(offTaskHandle);
+
+  xTaskCreatePinnedToCore(runNormalModeTask, "NormalModeTask", 3000, (void *)&trafficLightParams, 1, &normalTaskHandle, 1);
+  xTaskCreatePinnedToCore(runObstructedModeTask, "ObstructedModeTask", 3000, NULL, 1, &obstructedTaskHandle, 1);
+  xTaskCreatePinnedToCore(runPedestrianRequestModeTask, "PedestrianRequestModeTask", 3000, (void *)&trafficLightParams, 1, &pedestrianRequestTaskHandle, 1);
+  xTaskCreatePinnedToCore(runOffModeTask, "OffModeTask", 3000, NULL, 1, &offTaskHandle, 1);
+}
+
 void registerESP()
 {
   // Register the ESP32 with the MQTT broker
@@ -84,9 +98,7 @@ void registerESP()
   doc["name"] = ESP.getEfuseMac();
   String messageStr;
   serializeJson(doc, messageStr);
-  MQTT_CLIENT.beginPublish("semaphore/create", messageStr.length(), true);
-  MQTT_CLIENT.print(messageStr);
-  MQTT_CLIENT.endPublish();
+  MQTT_CLIENT.publish("semaphore/create", messageStr.c_str(), false);
 }
 
 String intToDay(int day) {
@@ -117,6 +129,7 @@ int timeToSeconds(const String &time) {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
+
 void checkActiveHours(void * parameter) {
   for(;;) {
     // Get the current time from the RTC
@@ -142,16 +155,6 @@ void checkActiveHours(void * parameter) {
     int startHourSeconds = timeToSeconds(currentDayActiveHours.startHour);
     int endHourSeconds = timeToSeconds(currentDayActiveHours.endHour);
     
-    Serial.println("currentDayString: " + currentDayString);
-    //print start and end from today
-    Serial.println("currentHour" + currentTime);
-    Serial.println("startHour" + currentDayActiveHours.startHour);
-    Serial.println("endHour" + currentDayActiveHours.endHour);
-    Serial.println("currentTimeSeconds: " + String(currentTimeSeconds));
-    Serial.println("startHourSeconds: " + String(startHourSeconds));
-    Serial.println("endHourSeconds: " + String(endHourSeconds));
-    Serial.println(currentDayString.c_str());
-    Serial.println(currentDayActiveHours.day.c_str());
     if (strcmp(currentDayString.c_str(), currentDayActiveHours.day.c_str()) == 0  && 
         startHourSeconds <= currentTimeSeconds && 
         endHourSeconds >= currentTimeSeconds) {
@@ -175,6 +178,23 @@ void checkActiveHours(void * parameter) {
   }
 }
 
+void askForConfig() {
+  DynamicJsonDocument doc(1024);
+  doc["name"] = ESP.getEfuseMac();
+  String messageStr;
+  serializeJson(doc, messageStr);
+
+  MQTT_CLIENT.publish("semaphore/start", messageStr.c_str(), false);
+
+}
+
+void waitForConfig() {
+  while (!configReceived)
+  {
+    vTaskDelay(pdMS_TO_TICKS(100));
+  }
+}
+
 
 void setup()
 {
@@ -188,6 +208,8 @@ void setup()
 
   registerESP();
 
+  askForConfig();
+
   timeClient.begin();
   while (!timeClient.update())
   {
@@ -195,6 +217,7 @@ void setup()
   }
 
   rtc.setTime(timeClient.getEpochTime());
+
 
   // print the date and time saved in the RTC
   Serial.println(rtc.getDateTime(true));
@@ -208,7 +231,6 @@ void setup()
   pinMode(boton, INPUT);
 
   attachInterrupt(digitalPinToInterrupt(boton1), handleButtonPress, FALLING);
-  attachInterrupt(digitalPinToInterrupt(boton2), handleButtonPress, FALLING);
 
   modeChangeSemaphore = xSemaphoreCreateMutex();
 

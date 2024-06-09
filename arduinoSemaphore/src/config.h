@@ -12,7 +12,7 @@ extern const int mqtt_port;
 extern unsigned int semaphore;
 extern bool isInterrupted;
 const int boton1 = 23;
-const int boton2 = 34;
+const int boton2 = 26;
 
 
 enum TrafficLightMode {
@@ -33,6 +33,10 @@ struct activeHours {
   String endHour;
 };
 
+void restartTrafficLightTasks();
+
+extern bool configReceived;
+
 extern activeHours activeHoursArray[7];
 
 extern TrafficLightParams trafficLightParams;
@@ -49,7 +53,7 @@ const int b = 0;
 const int r1 =  32;
 const int g1 = 33;
 const int b1 = 25;
-const int boton = 34;
+const int boton = 26;
 extern LiquidCrystal_I2C lcd;  // set the LCD address to 0x3F for a 16 chars and 2 line display
 
 extern SemaphoreHandle_t modeChangeSemaphore;

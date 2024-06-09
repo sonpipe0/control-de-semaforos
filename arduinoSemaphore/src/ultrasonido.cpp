@@ -1,10 +1,20 @@
 #include <ultrasonido.h>
 #include <wifi_mqtt_manager.h>
+#include <ArduinoJson.h>
+
 
 const int trigPin = 5;
 const int echoPin = 18;
 int distance = 0;
 int numReadings = 100;
+
+DynamicJsonDocument generateObstructionJSON() {
+    DynamicJsonDocument doc(1024);
+    doc["name"] = ESP.getEfuseMac();
+
+    
+    return doc;
+};
 
 void ultraSoundTask(void * parameter) {
   pinMode(trigPin, OUTPUT);
@@ -31,10 +41,12 @@ void ultraSoundTask(void * parameter) {
 
 
     if(average < 50) {
-        String msg = "Obstacle detected at ";
-        msg += average;
-        MQTT_CLIENT.publish("obstruction/detected", msg.c_str());
+        DynamicJsonDocument msg = generateObstructionJSON();
+        String msgStr;
+        serializeJson(msg, msgStr);
+        MQTT_CLIENT.publish("semaphore/obstruction", msgStr.c_str(), false);
+        Serial.println(msgStr);
     }
-    delay(200);
+    vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }

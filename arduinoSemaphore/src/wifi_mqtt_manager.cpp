@@ -35,7 +35,7 @@ void reconnect() {
 
   while (!MQTT_CLIENT.connected()) {
     Serial.println("Intentando conectar con MQTT.");
-    if (MQTT_CLIENT.connect(boardId)) {
+    if (MQTT_CLIENT.connect(boardId, NULL, NULL, NULL, 0, true, NULL, false)) {
       subscribeToTopics(); // Call function to handle all subscriptions
     } else {
       Serial.println("Conexión fallida, intentando de nuevo en 3 segundos");

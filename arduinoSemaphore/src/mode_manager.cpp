@@ -12,9 +12,7 @@ void runNormalModeTask(void *pvParameters) {
     TrafficLightParams *params = (TrafficLightParams *) pvParameters;
     int redTime = params->redTime;
     int greenTime = params->greenTime;
-    Serial.println("Normal mode");
-    Serial.println(redTime);
-    Serial.println(greenTime);
+    
     
     while (mode == NORMAL) {
       yellow(r1, g1, b1);

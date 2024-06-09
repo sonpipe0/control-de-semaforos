@@ -73,6 +73,16 @@ void parseJson(String message)
     }
 }
 
+void updateConfig(DynamicJsonDocument doc)
+{
+    int red_time = doc["red_time"];
+    int green_time = doc["green_time"];
+    trafficLightParams.redTime = red_time;
+    trafficLightParams.greenTime = green_time;
+    parseJson(doc["operating_time"]);
+    configReceived = true;
+}
+
 void changeSemaphoreStatus(String message)
 {
     if (strcmp(message.c_str(), "NORMAL") == 0)
@@ -108,9 +118,10 @@ void subscribeToTopics()
     String changeActiveTimes = "semaphore/" + String(ESP.getEfuseMac()) + "/active/hours";
     MQTT_CLIENT.subscribe(changeActiveTimes.c_str());
     MQTT_CLIENT.subscribe(topic.c_str());
-    MQTT_CLIENT.subscribe("active/hours");
-    MQTT_CLIENT.subscribe("shutdown");
-    MQTT_CLIENT.subscribe("turn/on");
+    String updateTimings = "semaphore/" + String(ESP.getEfuseMac()) + "/timing";
+    MQTT_CLIENT.subscribe(updateTimings.c_str());
+    String setupTopic = "semaphore/" + String(ESP.getEfuseMac()) + "/start";
+    MQTT_CLIENT.subscribe(setupTopic.c_str());
 }
 
 void callback(char *topic, byte *payload, unsigned int length)
@@ -120,7 +131,8 @@ void callback(char *topic, byte *payload, unsigned int length)
     Serial.println(topic);
     String modeTopic = "semaphore/" + String(ESP.getEfuseMac()) + "/status";
     String changeActiveTimes = "semaphore/" + String(ESP.getEfuseMac()) + "/active/hours";
-    Serial.println(changeActiveTimes);
+    String updateTimings = "semaphore/" + String(ESP.getEfuseMac()) + "/timing";
+    String setupTopic = "semaphore/" + String(ESP.getEfuseMac()) + "/start";
     if (strcmp(topic, "handler/obstruction") == 0)
     {
         Serial.println("Obstruction detected");
@@ -170,6 +182,29 @@ void callback(char *topic, byte *payload, unsigned int length)
             Serial.print("End: ");
             Serial.println(activeHoursArray[i].endHour);
         }
+    }
+    else if (strcmp(topic, updateTimings.c_str()) == 0)
+    {
+        String message = readPayload(payload, length);
+        Serial.println("Timings updated");
+        Serial.println(message);
+        DynamicJsonDocument doc(1024);
+        deserializeJson(doc, message);
+        int red_time = doc["red_time"];
+        int green_time = doc["green_time"];
+        trafficLightParams.redTime = red_time;
+        trafficLightParams.greenTime = green_time;
+        restartTrafficLightTasks();
+    }
+    else if (strcmp(topic, setupTopic.c_str()) == 0)
+    {
+        String message = readPayload(payload, length);
+        Serial.println("Setup received");
+        Serial.println(message);
+        DynamicJsonDocument doc(1024);
+        deserializeJson(doc, message);
+        updateConfig(doc);
+        restartTrafficLightTasks();
     }
     else{
         Serial.println("Unknown topic");
